@@ -7,7 +7,7 @@ import platform
 import logging
 
 from requests.adapters import HTTPAdapter
-from urllib3.util import create_urllib3_context
+from urllib3.util.ssl_ import create_urllib3_context
 
 logger = logging.getLogger(__name__)
 import json
