@@ -1,10 +1,14 @@
 # Copyright (C) 2015 Twitter, Inc.
 
 """Container for all HTTP request and response logic for the SDK."""
-
+import ssl
 import sys
 import platform
 import logging
+
+from requests.adapters import HTTPAdapter
+from urllib3.util import create_urllib3_context
+
 logger = logging.getLogger(__name__)
 import json
 import zlib
@@ -19,6 +23,21 @@ from requests.exceptions import Timeout
 from requests_oauthlib import OAuth1Session
 from twitter_ads.utils import get_version
 from twitter_ads.error import Error
+
+
+class AdapterFix(HTTPAdapter):
+    def __init__(self):
+        self.ssl_context = create_urllib3_context()
+        self.ssl_context.options &= ~ssl.OP_NO_TICKET
+        super().__init__()
+
+    def init_poolmanager(self, *args, **kwargs):
+        kwargs["ssl_context"] = self.ssl_context
+        super().init_poolmanager(*args, **kwargs)
+
+    def proxy_manager_for(self, *args, **kwargs):
+        kwargs["ssl_context"] = self.ssl_context
+        return super().proxy_manager_for(*args, **kwargs)
 
 
 class Request(object):
@@ -102,6 +121,8 @@ class Request(object):
             resource_owner_key=self._client.access_token,
             resource_owner_secret=self._client.access_token_secret)
 
+        consumer.adapters["http://"] = AdapterFix()
+
         url = self.__domain() + self._resource
         method = getattr(consumer, self._method)
 
@@ -126,7 +147,7 @@ class Request(object):
 
             if handle_rate_limit and retry_after is None:
                 rate_limit_reset = response.headers.get('x-account-rate-limit-reset') \
-                    or response.headers.get('x-rate-limit-reset')
+                                   or response.headers.get('x-rate-limit-reset')
 
                 if response.status_code == 429:
                     retry_after = int(rate_limit_reset) - int(time.time())
