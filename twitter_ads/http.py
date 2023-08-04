@@ -121,7 +121,7 @@ class Request(object):
             resource_owner_key=self._client.access_token,
             resource_owner_secret=self._client.access_token_secret)
 
-        consumer.adapters["http://"] = AdapterFix()
+        consumer.adapters["https://"] = AdapterFix()
 
         url = self.__domain() + self._resource
         method = getattr(consumer, self._method)
