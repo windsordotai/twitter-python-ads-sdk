@@ -45,6 +45,8 @@ extra_opts = {
 
 if sys.version_info[0] > 2:
     extra_opts['setup_requires'].append('sphinx==2.1.1')
+    # 0.21 build is broken (2024-04-10)
+    extra_opts['setup_requires'].append('docutils==0.20.1')
 
 setup(
     name='twitter-ads',
